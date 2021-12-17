@@ -18,6 +18,7 @@ import java.util.zip.ZipInputStream;
 
 public class Log4JDetector {
 
+    private static final String FILE_CLASSES_DEX = "classes.dev".toLowerCase(Locale.ROOT);
     private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
@@ -25,6 +26,7 @@ public class Log4JDetector {
     private static final String FILE_LOG4J_4 = "core/Layout.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_5 = "core/LoggerContext.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_2_10_CLASS = "appender.nosql.NoSqlAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_VULNERABLE = "JndiLookup.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_SAFE_CONDITION1 = "JndiManager.class".toLowerCase(Locale.ROOT);
 
@@ -167,6 +169,7 @@ public class Log4JDetector {
                     || "jar".equalsIgnoreCase(suffix)
                     || "war".equalsIgnoreCase(suffix)
                     || "ear".equalsIgnoreCase(suffix)
+                    || "apk".equalsIgnoreCase(suffix)
                     || "aar".equalsIgnoreCase(suffix)) {
                 return 0;
             }
@@ -586,6 +589,13 @@ public class Log4JDetector {
                     String currentPathLower = f.getPath().toLowerCase(Locale.ROOT);
                     boolean isLog4J_1_X = currentPathLower.endsWith(FILE_OLD_LOG4J);
                     boolean maybe = false;
+                    boolean isVulnerable = false;
+                    boolean isLog4J2 = false;
+                    boolean isLog4J_2_10 = false;
+                    boolean isLog4J_2_12_2 = false;
+                    boolean isNotLog4J_2_12_2 = false;
+                    boolean isLog4J_2_15 = false;
+                    boolean isLog4J_2_16 = false;
                     if (isLog4J_1_X) {
                         StringBuilder buf = new StringBuilder();
                         String grandParent = f.getParentFile().getParent();
@@ -594,13 +604,19 @@ public class Log4JDetector {
                     } else {
                         maybe = currentPathLower.endsWith(FILE_LOG4J_1);
                     }
+                    if( currentPathLower.endsWith(FILE_CLASSES_DEX)){
+                            if (f.canRead()) {
+                                byte[] bytes = Bytes.fileToBytes(f);
+                                if (containsMatch(bytes, Bytes.fromString(FILE_LOG4J_2_10_CLASS))){
+                                    isLog4J2 = true;
+                                    isLog4J_2_10 = true;
+                                    isVulnerable = true;
+                                }
+                            } else {
+                                System.err.println("-- Problem: no permission to read file - " + f.getPath() + " (required to determine if log4j2 exists, will assume not)");
+                            }
+                    }
                     if (maybe) {
-                        boolean isVulnerable = false;
-                        boolean isLog4J_2_10 = false;
-                        boolean isLog4J_2_12_2 = false;
-                        boolean isNotLog4J_2_12_2 = false;
-                        boolean isLog4J_2_15 = false;
-                        boolean isLog4J_2_16 = false;
                         if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_2)) {
                             if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_3)) {
                                 if (exists(f.getParent() + "/../" + ACTUAL_FILE_LOG4J_4)) {
@@ -646,24 +662,29 @@ public class Log4JDetector {
                         StringBuilder buf = new StringBuilder();
                         buf.append(f.getParentFile().getParent()).append(" contains Log4J-2.x   ");
                         if (isVulnerable) {
-                            if (isLog4J_2_10) {
-                                if (isLog4J_2_15) {
-                                    if (isLog4J_2_16) {
-                                        buf.append(">= 2.16.0 _SAFE_ :-)");
+                            if(isLog4J2){
+                                buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) ");
+                                foundHits = true;
+                            }else{
+                                    if (isLog4J_2_10) {
+                                        if (isLog4J_2_15) {
+                                            if (isLog4J_2_16) {
+                                                buf.append(">= 2.16.0 _SAFE_ :-)");
+                                            } else {
+                                                buf.append(">= 2.15.0 _OKAY_ :-|");
+                                            }
+                                        } else {
+                                            if (isLog4J_2_12_2) {
+                                                buf.append(">= 2.12.2 _SAFE_ :-)");
+                                            } else {
+                                                buf.append(">= 2.10.0 _VULNERABLE_ :-(");
+                                                foundHits = true;
+                                            }
+                                        }
                                     } else {
-                                        buf.append(">= 2.15.0 _OKAY_ :-|");
-                                    }
-                                } else {
-                                    if (isLog4J_2_12_2) {
-                                        buf.append(">= 2.12.2 _SAFE_ :-)");
-                                    } else {
-                                        buf.append(">= 2.10.0 _VULNERABLE_ :-(");
+                                        buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
                                         foundHits = true;
                                     }
-                                }
-                            } else {
-                                buf.append(">= 2.0-beta9 (< 2.10.0) _VULNERABLE_ :-(");
-                                foundHits = true;
                             }
                         } else {
                             buf.append("<= 2.0-beta8 _POTENTIALLY_SAFE_ :-| (or did you already remove JndiLookup.class?) ");
