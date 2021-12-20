@@ -1,3 +1,11 @@
+
+This is a modified version of the [mergebase/log4j-detector](https://github.com/mergebase/log4j-detector/) project.  It is extended to do minor scanning of APK files for potential existence of log4j2, but does not do deep checks past the existence of certain files.  It was a quick example of extending the project to scan the classes.dex for libraries that are included.
+
+# Example Usage:
+
+java -jar log4j-detector-2021.12.16-apk.jar [path-to-scan] > hits.txt
+
+# Original Readme.md from Mergebase
 # log4j-detector
 
 Detects Log4J versions on your file-system within any application that are vulnerable to [CVE-2021-44228](https://mergebase.com/vulnerability/CVE-2021-44228/)  and [CVE-2021-45046](https://mergebase.com/vulnerability/CVE-2021-45046/). It is able to even find instances that are hidden several layers deep. Works on Linux, Windows, and Mac, and everywhere else Java runs, too!
