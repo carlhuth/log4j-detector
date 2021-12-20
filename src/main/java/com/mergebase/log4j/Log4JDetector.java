@@ -18,7 +18,7 @@ import java.util.zip.ZipInputStream;
 
 public class Log4JDetector {
 
-    private static final String FILE_CLASSES_DEX = "classes.dev".toLowerCase(Locale.ROOT);
+    private static final String FILE_CLASSES_DEX = "classes.dex".toLowerCase(Locale.ROOT);
     private static final String FILE_OLD_LOG4J = "log4j/DailyRollingFileAppender.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_1 = "core/LogEvent.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2 = "core/Appender.class".toLowerCase(Locale.ROOT);
@@ -26,7 +26,9 @@ public class Log4JDetector {
     private static final String FILE_LOG4J_4 = "core/Layout.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_5 = "core/LoggerContext.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_2_10 = "appender/nosql/NoSqlAppender.class".toLowerCase(Locale.ROOT);
-    private static final String FILE_LOG4J_2_10_CLASS = "appender.nosql.NoSqlAppender.class".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_2_10_CLASS = "appender/nosql/NoSqlAppender".toLowerCase(Locale.ROOT);
+    private static final String FILE_LOG4J_VULNERABLE_CLASS = "JndiLookup".toLowerCase(Locale.ROOT);
+    private static final String ACTUAL_FILE_LOG4J_JNDI_MANAGER_CLASS = "core/net/JndiManager";
     private static final String FILE_LOG4J_VULNERABLE = "JndiLookup.class".toLowerCase(Locale.ROOT);
     private static final String FILE_LOG4J_SAFE_CONDITION1 = "JndiManager.class".toLowerCase(Locale.ROOT);
 
